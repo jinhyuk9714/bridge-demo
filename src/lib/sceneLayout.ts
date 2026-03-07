@@ -67,21 +67,25 @@ const createShorelineShelves = (
 ): BridgeBoxPart[] => {
   const halfSpan = params.spanLength / 2;
   const spanOffset = params.spanLength * 0.52;
-  const abutmentOffset = halfSpan + params.deckWidth * 1.16;
+  const abutmentReach = Math.max(
+    params.deckWidth * 0.9,
+    (halfSpan - Math.abs(guides.approachPierXs[0])) * 0.42
+  );
+  const abutmentOffset = halfSpan + abutmentReach;
 
   return [
     {
       id: 'abutment-left',
       position: [-abutmentOffset, params.deckElevation * 0.26, 48],
       size: [params.deckWidth * 2.4, params.deckElevation * 0.52, params.deckWidth * 4.8],
-      color: '#8a7a5e',
+      color: '#9ea7b0',
       rotation: [0, -0.03, 0]
     },
     {
       id: 'abutment-right',
       position: [abutmentOffset, params.deckElevation * 0.24, -46],
       size: [params.deckWidth * 2.4, params.deckElevation * 0.48, params.deckWidth * 4.6],
-      color: '#847357',
+      color: '#98a2ab',
       rotation: [0, 0.03, 0]
     },
     {

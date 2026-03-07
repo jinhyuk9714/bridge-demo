@@ -79,6 +79,19 @@ describe('generateSceneLayout', () => {
     );
   });
 
+  it('uses concrete-toned abutments while keeping shoreline shelves earthy', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const layout = generateSceneLayout(balancedPreset.params, model.guides);
+    const leftAbutment = layout.shoreline.find((part) => part.id === 'abutment-left');
+    const rightAbutment = layout.shoreline.find((part) => part.id === 'abutment-right');
+    const shoreLeft = layout.shoreline.find((part) => part.id === 'shore-left');
+
+    expect(leftAbutment?.color).toBe('#9ea7b0');
+    expect(rightAbutment?.color).toBe('#98a2ab');
+    expect(shoreLeft?.color).not.toBe(leftAbutment?.color);
+    expect(shoreLeft?.color).not.toBe(rightAbutment?.color);
+  });
+
   it('wraps traffic progress when a vehicle loops past the end of its lane', () => {
     expect(advanceTrafficProgress(0.98, 0.1, 0.4)).toBeCloseTo(0.02, 5);
     expect(advanceTrafficProgress(0.25, 0.05, 0.2)).toBeCloseTo(0.26, 5);

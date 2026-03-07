@@ -160,6 +160,38 @@ describe('generateBridgeModel', () => {
     expect(soffit?.position[1]).toBeLessThan(model.guides.roadSurfaceY);
   });
 
+  it('builds each pylon leg from tapered stacked concrete segments', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const lowerSegment = model.towerFrames.find((part) => part.id === 'tower-1-leg-left-lower');
+    const midSegment = model.towerFrames.find((part) => part.id === 'tower-1-leg-left-mid');
+    const upperSegment = model.towerFrames.find((part) => part.id === 'tower-1-leg-left-upper');
+
+    expect(lowerSegment).toBeDefined();
+    expect(midSegment).toBeDefined();
+    expect(upperSegment).toBeDefined();
+    expect(lowerSegment?.color).toBe('#b8c0c9');
+    expect(midSegment?.color).toBe('#c2cad3');
+    expect(upperSegment?.color).toBe('#cbd3db');
+    expect((lowerSegment?.size[0] ?? 0) > (midSegment?.size[0] ?? 0)).toBe(true);
+    expect((midSegment?.size[0] ?? 0) > (upperSegment?.size[0] ?? 0)).toBe(true);
+    expect((lowerSegment?.size[2] ?? 0) > (upperSegment?.size[2] ?? 0)).toBe(true);
+  });
+
+  it('uses a desaturated steel palette for the box girder and cable hardware', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const boxGirderCore = model.deckDetails.find((part) => part.id === 'box-girder-core');
+    const soffit = model.deckDetails.find((part) => part.id === 'box-girder-soffit');
+    const fascia = model.deckDetails.find((part) => part.id === 'deck-fascia-left');
+    const cableHousing = model.deckDetails.find((part) => part.id.startsWith('cable-housing-'));
+    const towerCableAnchor = model.towerFrames.find((part) => part.id.includes('-cable-anchor-'));
+
+    expect(boxGirderCore?.color).toBe('#5f7384');
+    expect(soffit?.color).toBe('#465968');
+    expect(fascia?.color).toBe('#708495');
+    expect(cableHousing?.color).toBe('#4b5d6a');
+    expect(towerCableAnchor?.color).toBe('#b6c0c8');
+  });
+
   it('adds a tower anchor block for every cable start so cables originate on the pylon', () => {
     const model = generateBridgeModel(balancedPreset.params);
     const towerCableAnchors = model.towerFrames.filter((part) =>

@@ -9,12 +9,19 @@ import type {
 const DECK_THICKNESS = 4.2;
 const ROAD_SURFACE_THICKNESS = 0.42;
 const TOWER_RATIO = 0.19;
-const WARM_STEEL = '#b76148';
-const WARM_STEEL_DARK = '#8f4936';
-const WARM_STEEL_LIGHT = '#d47c58';
-const ASPHALT = '#363b43';
+const PYLON_CONCRETE_BASE = '#b8c0c9';
+const PYLON_CONCRETE_MID = '#c2cad3';
+const PYLON_CONCRETE_TOP = '#cbd3db';
+const PYLON_CONCRETE_DARK = '#9aa5b0';
+const PYLON_CONCRETE_FOOTING = '#858f9a';
+const GIRDER_STEEL = '#5f7384';
+const GIRDER_STEEL_DARK = '#465968';
+const GIRDER_STEEL_LIGHT = '#708495';
+const GIRDER_HARDWARE = '#4b5d6a';
+const CABLE_HARDWARE = '#b6c0c8';
+const ASPHALT = '#333941';
 const STEEL_CABLE = '#d7dee8';
-const CONCRETE = '#9ba6b4';
+const CONCRETE = '#aab3bd';
 
 const getTowerDimensions = (params: BridgeParams, towerInnerClearZ: number) => {
   const legThicknessX = Math.max(2.8, params.deckWidth * 0.16);
@@ -71,67 +78,67 @@ const createDeckDetails = (params: BridgeParams, guides: BridgeGuides): BridgeBo
       id: 'shoulder-left',
       position: [0, roadSurfaceCenterY - 0.08, guides.deckEdgeZ - shoulderWidth / 2],
       size: [params.spanLength * 0.99, 0.28, shoulderWidth],
-      color: WARM_STEEL_DARK
+      color: GIRDER_STEEL_DARK
     },
     {
       id: 'shoulder-right',
       position: [0, roadSurfaceCenterY - 0.08, -guides.deckEdgeZ + shoulderWidth / 2],
       size: [params.spanLength * 0.99, 0.28, shoulderWidth],
-      color: WARM_STEEL_DARK
+      color: GIRDER_STEEL_DARK
     },
     {
       id: 'guardrail-left',
       position: [0, guides.roadSurfaceY + 0.82, guides.deckEdgeZ - 0.14],
       size: [params.spanLength * 0.985, 1.1, 0.18],
-      color: '#f0b177'
+      color: '#b1b9c2'
     },
     {
       id: 'guardrail-right',
       position: [0, guides.roadSurfaceY + 0.82, -guides.deckEdgeZ + 0.14],
       size: [params.spanLength * 0.985, 1.1, 0.18],
-      color: '#f0b177'
+      color: '#b1b9c2'
     },
     {
       id: 'deck-fascia-left',
       position: [0, guides.deckSoffitY + fasciaHeight / 2 + 0.12, guides.deckFasciaZ],
       size: [params.spanLength * 0.982, fasciaHeight, fasciaThickness],
-      color: WARM_STEEL
+      color: GIRDER_STEEL_LIGHT
     },
     {
       id: 'deck-fascia-right',
       position: [0, guides.deckSoffitY + fasciaHeight / 2 + 0.12, -guides.deckFasciaZ],
       size: [params.spanLength * 0.982, fasciaHeight, fasciaThickness],
-      color: WARM_STEEL
+      color: GIRDER_STEEL_LIGHT
     },
     {
       id: 'edge-girder-left',
       position: [0, guides.deckSoffitY + 0.66, guides.deckFasciaZ - edgeGirderInset],
       size: [params.spanLength * 0.97, 0.74, 0.84],
-      color: '#6f3f30'
+      color: GIRDER_HARDWARE
     },
     {
       id: 'edge-girder-right',
       position: [0, guides.deckSoffitY + 0.66, -guides.deckFasciaZ + edgeGirderInset],
       size: [params.spanLength * 0.97, 0.74, 0.84],
-      color: '#6f3f30'
+      color: GIRDER_HARDWARE
     },
     {
       id: 'box-girder-core',
       position: [0, params.deckElevation - 0.42, 0],
-      size: [params.spanLength * 0.95, 1.84, boxGirderWidth],
-      color: '#734432'
+      size: [params.spanLength * 0.95, 2.28, boxGirderWidth],
+      color: GIRDER_STEEL
     },
     {
       id: 'box-girder-soffit',
       position: [0, guides.deckSoffitY, 0],
-      size: [params.spanLength * 0.938, soffitThickness, Math.max(7.2, boxGirderWidth * 1.08)],
-      color: '#653728'
+      size: [params.spanLength * 0.938, soffitThickness + 0.1, Math.max(7.4, boxGirderWidth * 1.1)],
+      color: GIRDER_STEEL_DARK
     },
     {
       id: 'underside-web-left',
       position: [0, guides.deckSoffitY + soffitThickness / 2 + undersideWebHeight / 2, undersideWebInsetZ],
-      size: [params.spanLength * 0.936, undersideWebHeight, 0.26],
-      color: '#5c3124'
+      size: [params.spanLength * 0.936, undersideWebHeight + 0.36, 0.28],
+      color: GIRDER_HARDWARE
     },
     {
       id: 'underside-web-right',
@@ -140,8 +147,8 @@ const createDeckDetails = (params: BridgeParams, guides: BridgeGuides): BridgeBo
         guides.deckSoffitY + soffitThickness / 2 + undersideWebHeight / 2,
         -undersideWebInsetZ
       ],
-      size: [params.spanLength * 0.936, undersideWebHeight, 0.26],
-      color: '#5c3124'
+      size: [params.spanLength * 0.936, undersideWebHeight + 0.36, 0.28],
+      color: GIRDER_HARDWARE
     },
     ...createLaneMarkers(params, spanInset, guides.roadSurfaceY)
   ];
@@ -160,7 +167,7 @@ const createCableAnchors = (
         id: `cable-anchor-${cable.id}`,
         position: cable.end,
         size: [0.94, 0.24, 0.34],
-        color: WARM_STEEL_LIGHT
+        color: CABLE_HARDWARE
       },
       {
         id: `cable-housing-${cable.id}`,
@@ -170,7 +177,7 @@ const createCableAnchors = (
           cable.end[2] + sideSign * housingOffsetZ
         ],
         size: [1.24, 0.74, 0.56],
-        color: WARM_STEEL_DARK
+        color: GIRDER_HARDWARE
       }
     ];
   });
@@ -189,57 +196,87 @@ const createTowerFrames = (
   const beamSpanZ = guides.towerInnerClearZ + legThicknessZ * 0.95;
   const topBeamY = params.towerHeight * 0.78;
   const midBeamY = params.towerHeight * 0.57;
+  const lowerSegmentHeight = params.towerHeight * 0.36;
+  const midSegmentHeight = params.towerHeight * 0.34;
+  const upperSegmentHeight = params.towerHeight - lowerSegmentHeight - midSegmentHeight;
+  const lowerSegmentY = lowerSegmentHeight / 2;
+  const midSegmentY = lowerSegmentHeight + midSegmentHeight / 2;
+  const upperSegmentY = lowerSegmentHeight + midSegmentHeight + upperSegmentHeight / 2;
   const basePedestalHeight = Math.max(5.6, params.deckElevation * 0.12);
   const footingHeight = Math.max(2.4, params.deckElevation * 0.055);
 
   return [
     {
-      id: `${towerId}-leg-left`,
-      position: [towerX, params.towerHeight / 2, legCenterZ],
-      size: [legThicknessX, params.towerHeight, legThicknessZ],
-      color: WARM_STEEL
+      id: `${towerId}-leg-left-lower`,
+      position: [towerX, lowerSegmentY, legCenterZ],
+      size: [legThicknessX * 1.18, lowerSegmentHeight, legThicknessZ * 1.12],
+      color: PYLON_CONCRETE_BASE
     },
     {
-      id: `${towerId}-leg-right`,
-      position: [towerX, params.towerHeight / 2, -legCenterZ],
-      size: [legThicknessX, params.towerHeight, legThicknessZ],
-      color: WARM_STEEL
+      id: `${towerId}-leg-right-lower`,
+      position: [towerX, lowerSegmentY, -legCenterZ],
+      size: [legThicknessX * 1.18, lowerSegmentHeight, legThicknessZ * 1.12],
+      color: PYLON_CONCRETE_BASE
+    },
+    {
+      id: `${towerId}-leg-left-mid`,
+      position: [towerX, midSegmentY, legCenterZ],
+      size: [legThicknessX * 1.02, midSegmentHeight, legThicknessZ * 0.98],
+      color: PYLON_CONCRETE_MID
+    },
+    {
+      id: `${towerId}-leg-right-mid`,
+      position: [towerX, midSegmentY, -legCenterZ],
+      size: [legThicknessX * 1.02, midSegmentHeight, legThicknessZ * 0.98],
+      color: PYLON_CONCRETE_MID
+    },
+    {
+      id: `${towerId}-leg-left-upper`,
+      position: [towerX, upperSegmentY, legCenterZ],
+      size: [legThicknessX * 0.88, upperSegmentHeight, legThicknessZ * 0.84],
+      color: PYLON_CONCRETE_TOP
+    },
+    {
+      id: `${towerId}-leg-right-upper`,
+      position: [towerX, upperSegmentY, -legCenterZ],
+      size: [legThicknessX * 0.88, upperSegmentHeight, legThicknessZ * 0.84],
+      color: PYLON_CONCRETE_TOP
     },
     {
       id: `${towerId}-beam-mid`,
       position: [towerX, midBeamY, 0],
-      size: [legThicknessX * 0.9, Math.max(2.8, params.deckWidth * 0.13), beamSpanZ],
-      color: WARM_STEEL_LIGHT
+      size: [legThicknessX * 0.72, Math.max(2.2, params.deckWidth * 0.1), beamSpanZ],
+      color: PYLON_CONCRETE_MID
     },
     {
       id: `${towerId}-beam-top`,
       position: [towerX, topBeamY, 0],
-      size: [legThicknessX * 0.88, Math.max(2.4, params.deckWidth * 0.11), beamSpanZ * 0.98],
-      color: WARM_STEEL_LIGHT
+      size: [legThicknessX * 0.68, Math.max(2, params.deckWidth * 0.09), beamSpanZ * 0.96],
+      color: PYLON_CONCRETE_TOP
     },
     {
       id: `${towerId}-base-left`,
       position: [towerX, basePedestalHeight / 2 - 1.1, legCenterZ],
       size: [legThicknessX * 1.16, basePedestalHeight, legThicknessZ * 1.18],
-      color: '#cc7b5c'
+      color: PYLON_CONCRETE_DARK
     },
     {
       id: `${towerId}-base-right`,
       position: [towerX, basePedestalHeight / 2 - 1.1, -legCenterZ],
       size: [legThicknessX * 1.16, basePedestalHeight, legThicknessZ * 1.18],
-      color: '#cc7b5c'
+      color: PYLON_CONCRETE_DARK
     },
     {
       id: `${towerId}-footing-left`,
       position: [towerX, footingHeight / 2 - 0.7, legCenterZ],
       size: [legThicknessX * 1.56, footingHeight, legThicknessZ * 1.6],
-      color: '#a65d45'
+      color: PYLON_CONCRETE_FOOTING
     },
     {
       id: `${towerId}-footing-right`,
       position: [towerX, footingHeight / 2 - 0.7, -legCenterZ],
       size: [legThicknessX * 1.56, footingHeight, legThicknessZ * 1.6],
-      color: '#a65d45'
+      color: PYLON_CONCRETE_FOOTING
     }
   ];
 };
@@ -263,7 +300,7 @@ const createTowerCableAnchors = (
         id: `tower-${towerIndex}-cable-anchor-${cable.id}`,
         position: cable.start,
         size: [0.92, 0.24, 0.34],
-        color: WARM_STEEL_LIGHT
+        color: CABLE_HARDWARE
       },
       {
         id: `tower-${towerIndex}-cable-bracket-${cable.id}`,
@@ -272,8 +309,8 @@ const createTowerCableAnchors = (
           cable.start[1] - 0.22,
           cable.start[2] + sideSign * bracketInsetZ
         ],
-        size: [1.02, 0.68, 0.56],
-        color: WARM_STEEL_DARK
+        size: [0.88, 0.56, 0.42],
+        color: GIRDER_HARDWARE
       }
     ];
   });
@@ -383,7 +420,7 @@ const createSubstructure = (params: BridgeParams, guides: BridgeGuides): BridgeB
         id: `approach-pier-footing-${side}`,
         position: [pierX, footingHeight / 2 - 0.9, 0],
         size: [params.deckWidth * 0.92, footingHeight, params.deckWidth * 0.82],
-        color: '#8f99a6'
+        color: '#8894a0'
       },
       {
         id: `approach-pier-shaft-${side}`,
@@ -395,7 +432,7 @@ const createSubstructure = (params: BridgeParams, guides: BridgeGuides): BridgeB
         id: `approach-pier-cap-${side}`,
         position: [pierX, guides.deckSoffitY + 0.46, 0],
         size: [params.deckWidth * 1.02, pierCapHeight, params.deckWidth * 0.6],
-        color: '#b3bac3'
+        color: '#c7ced5'
       }
     ];
   });
@@ -408,13 +445,13 @@ const createSubstructure = (params: BridgeParams, guides: BridgeGuides): BridgeB
         id: `bearing-pedestal-${side}`,
         position: [towerX, guides.deckSoffitY - 0.06, 0],
         size: [params.deckWidth * 0.42, towerBearingPedestalHeight, params.deckWidth * 0.32],
-        color: '#98a1ae'
+        color: '#95a0ab'
       },
       {
         id: `bearing-seat-${side}`,
         position: [towerX, guides.deckSoffitY + 0.62, 0],
         size: [params.deckWidth * 0.72, bearingHeight, params.deckWidth * 0.44],
-        color: '#c3c9d1'
+        color: '#d4d9df'
       }
     ];
   });
@@ -428,14 +465,14 @@ export const generateBridgeModel = (params: BridgeParams): BridgeModelData => {
     id: 'deck',
     position: [0, params.deckElevation, 0],
     size: [params.spanLength, DECK_THICKNESS, params.deckWidth],
-    color: WARM_STEEL_DARK
+    color: GIRDER_STEEL_DARK
   };
 
   const towers: BridgeBoxPart[] = guides.towerXs.map((x, index) => ({
     id: `tower-${index + 1}`,
     position: [x, params.towerHeight / 2, 0],
     size: [Math.max(2.8, params.deckWidth * 0.16), params.towerHeight, guides.towerInnerClearZ],
-    color: WARM_STEEL
+    color: PYLON_CONCRETE_MID
   }));
 
   const towerFrames = guides.towerXs.flatMap((towerX, index) =>
