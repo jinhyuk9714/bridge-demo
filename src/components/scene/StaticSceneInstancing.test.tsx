@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { balancedPreset } from '../../data/bridgePresets';
@@ -7,10 +7,11 @@ import { generateSceneLayout } from '../../lib/sceneLayout';
 import { BridgeStructure } from './BridgeStructure';
 import { CliffEnvironment } from './CliffEnvironment';
 
-const sumInstanceCount = (testId: string) =>
-  screen
-    .getAllByTestId(testId)
-    .reduce((total, node) => total + Number(node.getAttribute('data-instance-count') ?? 0), 0);
+const sumInstanceCount = (container: HTMLElement, name: string) =>
+  [...container.querySelectorAll(`[name="${name}"]`)].reduce(
+    (total, node) => total + Number(node.getAttribute('count') ?? 0),
+    0
+  );
 
 describe('scene static instancing', () => {
   let consoleError: ReturnType<typeof vi.spyOn>;
@@ -26,38 +27,42 @@ describe('scene static instancing', () => {
   it('renders bridge structure through instanced box and cable groups', () => {
     const model = generateBridgeModel(balancedPreset.params);
 
-    render(<BridgeStructure model={model} />);
+    const { container } = render(<BridgeStructure model={model} />);
 
-    expect(sumInstanceCount('bridge-deck-detail-instanced')).toBeGreaterThan(0);
-    expect(sumInstanceCount('bridge-cable-anchor-instanced')).toBe(
+    expect(sumInstanceCount(container, 'bridge-deck-detail-instanced')).toBeGreaterThan(0);
+    expect(sumInstanceCount(container, 'bridge-cable-anchor-instanced')).toBe(
       model.deckDetails.filter((detail) => detail.id.startsWith('cable-anchor-')).length
     );
-    expect(sumInstanceCount('bridge-tower-frame-instanced')).toBeGreaterThan(0);
-    expect(sumInstanceCount('bridge-tower-cable-anchor-instanced')).toBe(
+    expect(sumInstanceCount(container, 'bridge-tower-frame-instanced')).toBeGreaterThan(0);
+    expect(sumInstanceCount(container, 'bridge-tower-cable-anchor-instanced')).toBe(
       model.towerFrames.filter((part) => part.id.includes('-cable-anchor-')).length
     );
-    expect(sumInstanceCount('bridge-pier-instanced')).toBe(
+    expect(sumInstanceCount(container, 'bridge-pier-instanced')).toBe(
       model.piers.filter((part) => !part.id.includes('bearing')).length
     );
-    expect(sumInstanceCount('bridge-bearing-instanced')).toBe(
+    expect(sumInstanceCount(container, 'bridge-bearing-instanced')).toBe(
       model.piers.filter((part) => part.id.includes('bearing')).length
     );
-    expect(screen.getByTestId('bridge-cable-instanced')).toHaveAttribute(
-      'data-instance-count',
+    expect(container.querySelector('[name="bridge-cable-instanced"]')).toHaveAttribute(
+      'count',
       String(model.cables.length)
     );
-    expect(screen.queryByTestId('bridge-cable-mesh')).not.toBeInTheDocument();
+    expect(container.querySelector('[name="bridge-cable-mesh"]')).toBeNull();
+    expect(container.querySelector('[data-testid]')).toBeNull();
+    expect(container.querySelector('[data-instance-count]')).toBeNull();
   });
 
   it('renders cliff and shoreline masses through instanced box groups', () => {
     const model = generateBridgeModel(balancedPreset.params);
     const layout = generateSceneLayout(balancedPreset.params, model.guides);
 
-    render(<CliffEnvironment layout={layout} />);
+    const { container } = render(<CliffEnvironment layout={layout} />);
 
-    expect(sumInstanceCount('cliff-mass-instanced')).toBe(layout.cliffs.length);
-    expect(sumInstanceCount('shoreline-shelf-instanced')).toBe(layout.shoreline.length);
-    expect(sumInstanceCount('backdrop-ridge-instanced')).toBe(layout.backdrops.length);
-    expect(screen.queryByTestId('cliff-mass')).not.toBeInTheDocument();
+    expect(sumInstanceCount(container, 'cliff-mass-instanced')).toBe(layout.cliffs.length);
+    expect(sumInstanceCount(container, 'shoreline-shelf-instanced')).toBe(layout.shoreline.length);
+    expect(sumInstanceCount(container, 'backdrop-ridge-instanced')).toBe(layout.backdrops.length);
+    expect(container.querySelector('[name="cliff-mass"]')).toBeNull();
+    expect(container.querySelector('[data-testid]')).toBeNull();
+    expect(container.querySelector('[data-instance-count]')).toBeNull();
   });
 });

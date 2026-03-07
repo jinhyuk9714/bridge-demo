@@ -60,6 +60,20 @@ describe('generateSceneLayout', () => {
     ).toBeLessThan(monumentalModel.guides.towerInnerClearZ / 2);
   });
 
+  it('keeps prominent bridge-end cliff masses framing the hero view corridor', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const layout = generateSceneLayout(balancedPreset.params, model.guides);
+    const leftCliff = layout.cliffs.find((part) => part.id === 'left-cliff-main');
+    const rightCliff = layout.cliffs.find((part) => part.id === 'right-cliff-main');
+
+    expect(leftCliff).toBeDefined();
+    expect(rightCliff).toBeDefined();
+    expect(leftCliff?.size[1]).toBeGreaterThan(balancedPreset.params.towerHeight * 0.4);
+    expect(rightCliff?.size[1]).toBeGreaterThan(balancedPreset.params.towerHeight * 0.4);
+    expect(Math.abs(leftCliff?.position[2] ?? 0)).toBeLessThan(balancedPreset.params.deckWidth * 2);
+    expect(Math.abs(rightCliff?.position[2] ?? 0)).toBeLessThan(balancedPreset.params.deckWidth * 2);
+  });
+
   it('aligns shoreline abutment masses near the bridge ends', () => {
     const model = generateBridgeModel(balancedPreset.params);
     const layout = generateSceneLayout(balancedPreset.params, model.guides);
@@ -79,6 +93,86 @@ describe('generateSceneLayout', () => {
     );
   });
 
+  it('adds bridge-end transition and wing-wall structures around the abutments', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const layout = generateSceneLayout(balancedPreset.params, model.guides);
+    const wingWalls = layout.shoreline.filter((part) => part.id.startsWith('wing-wall-'));
+    const transitionSlabs = layout.shoreline.filter((part) =>
+      part.id.startsWith('transition-slab-')
+    );
+    const approachRoads = layout.shoreline.filter((part) => part.id.startsWith('approach-road-'));
+    const embankments = layout.shoreline.filter((part) => part.id.startsWith('embankment-'));
+    const retainingWalls = layout.shoreline.filter((part) =>
+      part.id.startsWith('retaining-wall-')
+    );
+    const revetments = layout.shoreline.filter((part) => part.id.startsWith('revetment-'));
+    const terraces = layout.shoreline.filter((part) => part.id.startsWith('shore-terrace-'));
+    const pierPads = layout.shoreline.filter((part) => part.id.startsWith('pier-pad-'));
+    const maintenanceAprons = layout.shoreline.filter((part) =>
+      part.id.startsWith('maintenance-apron-')
+    );
+    const serviceYards = layout.shoreline.filter((part) => part.id.startsWith('service-yard-'));
+    const harborAprons = layout.shoreline.filter((part) => part.id.startsWith('harbor-apron-'));
+    const fenderWalls = layout.shoreline.filter((part) => part.id.startsWith('fender-wall-'));
+    const mooringDolphins = layout.shoreline.filter((part) =>
+      part.id.startsWith('mooring-dolphin-')
+    );
+    const breakwaters = layout.shoreline.filter((part) => part.id.startsWith('breakwater-'));
+    const sheds = layout.shoreline.filter((part) => part.id.startsWith('maintenance-shed-'));
+    const lightPoleBases = layout.shoreline.filter((part) =>
+      part.id.startsWith('light-pole-base-')
+    );
+    const bollards = layout.shoreline.filter((part) => part.id.startsWith('bollard-'));
+
+    expect(wingWalls).toHaveLength(4);
+    expect(transitionSlabs).toHaveLength(2);
+    expect(approachRoads).toHaveLength(2);
+    expect(embankments).toHaveLength(4);
+    expect(retainingWalls).toHaveLength(2);
+    expect(revetments).toHaveLength(2);
+    expect(terraces).toHaveLength(2);
+    expect(pierPads).toHaveLength(2);
+    expect(maintenanceAprons).toHaveLength(2);
+    expect(serviceYards).toHaveLength(2);
+    expect(harborAprons).toHaveLength(2);
+    expect(fenderWalls).toHaveLength(2);
+    expect(mooringDolphins).toHaveLength(2);
+    expect(breakwaters).toHaveLength(2);
+    expect(sheds).toHaveLength(2);
+    expect(lightPoleBases).toHaveLength(2);
+    expect(bollards).toHaveLength(4);
+    expect(transitionSlabs.every((part) => Math.abs(part.position[0]) > balancedPreset.params.spanLength / 2)).toBe(true);
+    expect(approachRoads.every((part) => Math.abs(part.position[0]) > Math.abs(transitionSlabs[0]?.position[0] ?? 0))).toBe(true);
+    expect(retainingWalls.every((part) => Math.abs(part.position[0]) > balancedPreset.params.spanLength / 2)).toBe(true);
+    expect(pierPads.every((part) => Math.abs(part.position[0]) < balancedPreset.params.spanLength / 2)).toBe(true);
+    expect(maintenanceAprons.every((part) => Math.abs(part.position[0]) < balancedPreset.params.spanLength / 2)).toBe(true);
+    expect(serviceYards.every((part) => Math.abs(part.position[0]) > Math.abs(approachRoads[0]?.position[0] ?? 0))).toBe(true);
+    expect(harborAprons.every((part) => Math.abs(part.position[0]) > Math.abs(pierPads[0]?.position[0] ?? 0))).toBe(true);
+    expect(mooringDolphins.every((part) => Math.abs(part.position[0]) < balancedPreset.params.spanLength / 2)).toBe(true);
+    expect(breakwaters.every((part) => Math.abs(part.position[0]) > Math.abs(mooringDolphins[0]?.position[0] ?? 0))).toBe(true);
+  });
+
+  it('adds navigation markers near bridge-end water edges and approach piers', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const layout = generateSceneLayout(balancedPreset.params, model.guides);
+    const buoys = layout.navigationMarkers.filter((marker) => marker.kind === 'buoy');
+    const beacons = layout.navigationMarkers.filter((marker) => marker.kind === 'beacon');
+
+    expect(buoys.length).toBeGreaterThanOrEqual(2);
+    expect(beacons.length).toBeGreaterThanOrEqual(2);
+    expect(
+      layout.navigationMarkers.every((marker) => Math.abs(marker.position[0]) > Math.abs(model.guides.approachPierXs[0]) * 0.65)
+    ).toBe(true);
+    expect(
+      layout.navigationMarkers.some((marker) => Math.abs(marker.position[0]) < balancedPreset.params.spanLength / 2)
+    ).toBe(true);
+    expect(
+      layout.navigationMarkers.some((marker) => Math.abs(marker.position[0]) > balancedPreset.params.spanLength / 2)
+    ).toBe(true);
+    expect(buoys.every((marker) => marker.bobRange > 0 && marker.bobSpeed > 0)).toBe(true);
+    expect(beacons.every((marker) => marker.blinkSpeed > 0)).toBe(true);
+  });
+
   it('uses concrete-toned abutments while keeping shoreline shelves earthy', () => {
     const model = generateBridgeModel(balancedPreset.params);
     const layout = generateSceneLayout(balancedPreset.params, model.guides);
@@ -86,10 +180,22 @@ describe('generateSceneLayout', () => {
     const rightAbutment = layout.shoreline.find((part) => part.id === 'abutment-right');
     const shoreLeft = layout.shoreline.find((part) => part.id === 'shore-left');
 
-    expect(leftAbutment?.color).toBe('#9ea7b0');
-    expect(rightAbutment?.color).toBe('#98a2ab');
+    expect(leftAbutment?.color).toBe('#a8afb5');
+    expect(rightAbutment?.color).toBe('#a1a8ae');
     expect(shoreLeft?.color).not.toBe(leftAbutment?.color);
     expect(shoreLeft?.color).not.toBe(rightAbutment?.color);
+  });
+
+  it('uses softened twilight fog colors for atmosphere bands', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const layout = generateSceneLayout(balancedPreset.params, model.guides);
+
+    expect(layout.atmosphereBands.map((band) => band.color)).toEqual([
+      '#ece2d8',
+      '#d6cec7',
+      '#bbb7b3'
+    ]);
+    expect(layout.atmosphereBands.map((band) => band.opacity)).toEqual([0.08, 0.06, 0.045]);
   });
 
   it('wraps traffic progress when a vehicle loops past the end of its lane', () => {

@@ -61,13 +61,29 @@ export type TrafficVehicleData = {
   progress: number;
 };
 
+export type NavigationMarkerData = {
+  id: string;
+  kind: 'buoy' | 'beacon';
+  position: Vec3;
+  color: string;
+  bobRange: number;
+  bobSpeed: number;
+  blinkSpeed: number;
+};
+
 export type BridgeGuides = {
   roadSurfaceY: number;
   deckSoffitY: number;
   roadHalfWidth: number;
   laneCentersZ: [number, number];
+  deckEndXs: [number, number];
+  abutmentXs: [number, number];
   deckEdgeZ: number;
   deckFasciaZ: number;
+  parapetZ: number;
+  walkwayZ: number;
+  jointXs: number[];
+  diaphragmXs: number[];
   cablePlaneOffsetsZ: [number, number];
   towerXs: [number, number];
   towerInnerClearZ: number;
@@ -102,4 +118,5 @@ export type SceneLayoutData = {
   backdrops: BridgeBoxPart[];
   atmosphereBands: AtmosphereBand[];
   trafficVehicles: TrafficVehicleData[];
+  navigationMarkers: NavigationMarkerData[];
 };

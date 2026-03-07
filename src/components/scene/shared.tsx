@@ -238,8 +238,8 @@ export const InstancedBoxes = memo(({ group }: { group: BoxInstanceGroup }) => {
   return (
     <instancedMesh
       castShadow={group.castShadow}
-      data-instance-count={group.parts.length}
-      data-testid={group.testId}
+      count={group.parts.length}
+      name={group.testId}
       receiveShadow={group.receiveShadow}
       ref={meshRef}
       args={[undefined, undefined, group.parts.length]}
@@ -277,8 +277,8 @@ export const InstancedCables = memo(({ group }: { group: CableInstanceGroup }) =
   return (
     <instancedMesh
       castShadow
-      data-instance-count={group.cables.length}
-      data-testid={group.testId}
+      count={group.cables.length}
+      name={group.testId}
       receiveShadow
       ref={meshRef}
       args={[undefined, undefined, group.cables.length]}
@@ -313,7 +313,7 @@ export const SceneBox = memo(
   }) => (
     <mesh
       castShadow={castShadow}
-      data-testid={testId}
+      name={testId}
       position={part.position}
       receiveShadow={receiveShadow}
       rotation={part.rotation ?? [0, 0, 0]}
@@ -347,7 +347,7 @@ export const CableSegment = memo(
     return (
       <mesh
         castShadow
-        data-testid="bridge-cable-mesh"
+        name="bridge-cable-mesh"
         position={midpoint.toArray()}
         quaternion={quaternion}
         receiveShadow

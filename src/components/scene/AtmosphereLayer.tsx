@@ -13,6 +13,7 @@ import {
 
 import type { AtmosphereBand } from '../../types/bridge';
 import { hasPosition, hasRotation } from './shared';
+import { scenePalette } from './sceneLook';
 
 const xAxis = new Vector3(1, 0, 0);
 
@@ -39,10 +40,11 @@ const WaterSurface = memo(() => {
   const baseMaterial = useMemo(
     () =>
       new MeshPhysicalMaterial({
-        color: '#416f95',
+        color: scenePalette.water.base,
+        clearcoat: 0.18,
         metalness: 0.04,
-        reflectivity: 0.68,
-        roughness: 0.3,
+        reflectivity: 0.54,
+        roughness: 0.38,
         transmission: 0.02
       }),
     []
@@ -50,10 +52,10 @@ const WaterSurface = memo(() => {
   const shimmerMaterial = useMemo(
     () =>
       new MeshPhysicalMaterial({
-        color: '#9ec5d9',
+        color: scenePalette.water.shimmer,
         metalness: 0,
-        opacity: 0.15,
-        roughness: 0.42,
+        opacity: 0.12,
+        roughness: 0.46,
         transparent: true
       }),
     []
@@ -84,7 +86,7 @@ const WaterSurface = memo(() => {
   return (
     <group>
       <mesh
-        data-testid="water-surface"
+        name="water-surface"
         receiveShadow
         position={[0, -0.34, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
@@ -94,7 +96,7 @@ const WaterSurface = memo(() => {
       </mesh>
 
       <mesh
-        data-testid="water-shimmer"
+        name="water-shimmer"
         ref={shimmerRef as never}
         position={[0, -0.18, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
@@ -186,8 +188,8 @@ export const AtmosphereLayer = memo(
 
         {bandGroups.map((group, index) => (
           <instancedMesh
-            data-instance-count={group.bands.length}
-            data-testid="atmosphere-band-instanced"
+            count={group.bands.length}
+            name="atmosphere-band-instanced"
             key={group.key}
             ref={((node: InstancedMesh | null) => {
               bandRefs.current[index] = node;

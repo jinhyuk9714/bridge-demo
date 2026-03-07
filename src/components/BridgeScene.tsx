@@ -18,6 +18,7 @@ import type { BridgeSceneHandle } from '../types/bridge';
 import { BridgeStructure } from './scene/BridgeStructure';
 import { CameraRig } from './scene/CameraRig';
 import { getCameraPresetView, normalizeFlightInput } from './scene/shared';
+import { sceneLighting } from './scene/sceneLook';
 
 export { getCameraPresetView } from './scene/shared';
 
@@ -131,15 +132,15 @@ export const BridgeScene = forwardRef<BridgeSceneHandle>((_, ref) => {
           setIsCanvasReady(true);
         }}
       >
-        <color attach="background" args={['#e3d4ca']} />
-        <fog attach="fog" args={['#d6c8be', 210, 920]} />
-        <ambientLight intensity={0.58} />
-        <hemisphereLight args={['#ffe7ca', '#385b63', 0.8]} />
+        <color attach="background" args={[sceneLighting.background]} />
+        <fog attach="fog" args={sceneLighting.fogArgs} />
+        <ambientLight intensity={sceneLighting.ambientIntensity} />
+        <hemisphereLight args={sceneLighting.hemisphereArgs} />
         <directionalLight
           castShadow
-          color="#ffd2a4"
-          intensity={1.68}
-          position={[180, 260, 120]}
+          color={sceneLighting.directional.color}
+          intensity={sceneLighting.directional.intensity}
+          position={sceneLighting.directional.position}
           shadow-mapSize-height={2048}
           shadow-mapSize-width={2048}
         />

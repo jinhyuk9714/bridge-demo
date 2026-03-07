@@ -18,6 +18,15 @@ describe('generateBridgeModel', () => {
     expect(model.guides.roadHalfWidth).toBeGreaterThan(0);
     expect(model.guides.deckFasciaZ).toBeGreaterThan(0);
     expect(model.guides.approachPierXs).toHaveLength(2);
+    expect(model.guides.deckEndXs).toEqual([
+      -balancedPreset.params.spanLength / 2,
+      balancedPreset.params.spanLength / 2
+    ]);
+    expect(model.guides.abutmentXs).toHaveLength(2);
+    expect(model.guides.parapetZ).toBeGreaterThan(model.guides.deckEdgeZ);
+    expect(model.guides.walkwayZ).toBeGreaterThan(model.guides.parapetZ);
+    expect(model.guides.jointXs).toHaveLength(4);
+    expect(model.guides.diaphragmXs.length).toBeGreaterThan(6);
     expect(model.guides.cablePlaneOffsetsZ).toEqual(
       expect.arrayContaining([expect.any(Number), expect.any(Number)])
     );
@@ -160,6 +169,44 @@ describe('generateBridgeModel', () => {
     expect(soffit?.position[1]).toBeLessThan(model.guides.roadSurfaceY);
   });
 
+  it('adds a parapet and maintenance walkway system outside the drivable lanes', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const parapets = model.deckDetails.filter((part) => part.id.startsWith('parapet-'));
+    const walkways = model.deckDetails.filter((part) => part.id.startsWith('walkway-'));
+    const curbs = model.deckDetails.filter((part) => part.id.startsWith('curb-'));
+
+    expect(parapets).toHaveLength(2);
+    expect(walkways).toHaveLength(2);
+    expect(curbs).toHaveLength(2);
+    expect(Math.max(...model.guides.laneCentersZ.map((laneCenter) => Math.abs(laneCenter)))).toBeLessThan(
+      model.guides.parapetZ
+    );
+    expect(model.guides.parapetZ).toBeLessThan(model.guides.walkwayZ);
+    expect(Math.abs(parapets[0]?.position[2] ?? 0)).toBeCloseTo(model.guides.parapetZ, 5);
+    expect(Math.abs(walkways[0]?.position[2] ?? 0)).toBeCloseTo(model.guides.walkwayZ, 5);
+  });
+
+  it('places expansion joints near stayed-span and approach transitions', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const joints = model.deckDetails.filter((part) => part.id.startsWith('expansion-joint-'));
+
+    expect(joints).toHaveLength(model.guides.jointXs.length);
+    expect(joints.map((part) => part.position[0])).toEqual(model.guides.jointXs);
+    expect(Math.abs(model.guides.jointXs[1])).toBeCloseTo(Math.abs(model.guides.towerXs[0]), 5);
+    expect(Math.abs(model.guides.jointXs[0])).toBeGreaterThan(Math.abs(model.guides.approachPierXs[0]));
+  });
+
+  it('adds repeated underside diaphragms and transition girder zones along the box girder', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const diaphragms = model.deckDetails.filter((part) => part.id.startsWith('diaphragm-'));
+    const transitions = model.deckDetails.filter((part) => part.id.startsWith('transition-girder-'));
+
+    expect(diaphragms).toHaveLength(model.guides.diaphragmXs.length);
+    expect(diaphragms.map((part) => part.position[0])).toEqual(model.guides.diaphragmXs);
+    expect(transitions).toHaveLength(4);
+    expect(transitions.every((part) => part.position[1] <= model.guides.deckSoffitY + 1.8)).toBe(true);
+  });
+
   it('builds each pylon leg from tapered stacked concrete segments', () => {
     const model = generateBridgeModel(balancedPreset.params);
     const lowerSegment = model.towerFrames.find((part) => part.id === 'tower-1-leg-left-lower');
@@ -169,9 +216,9 @@ describe('generateBridgeModel', () => {
     expect(lowerSegment).toBeDefined();
     expect(midSegment).toBeDefined();
     expect(upperSegment).toBeDefined();
-    expect(lowerSegment?.color).toBe('#b8c0c9');
-    expect(midSegment?.color).toBe('#c2cad3');
-    expect(upperSegment?.color).toBe('#cbd3db');
+    expect(lowerSegment?.color).toBe('#b7b5b1');
+    expect(midSegment?.color).toBe('#c5c3bf');
+    expect(upperSegment?.color).toBe('#d3d0cb');
     expect((lowerSegment?.size[0] ?? 0) > (midSegment?.size[0] ?? 0)).toBe(true);
     expect((midSegment?.size[0] ?? 0) > (upperSegment?.size[0] ?? 0)).toBe(true);
     expect((lowerSegment?.size[2] ?? 0) > (upperSegment?.size[2] ?? 0)).toBe(true);
@@ -185,11 +232,11 @@ describe('generateBridgeModel', () => {
     const cableHousing = model.deckDetails.find((part) => part.id.startsWith('cable-housing-'));
     const towerCableAnchor = model.towerFrames.find((part) => part.id.includes('-cable-anchor-'));
 
-    expect(boxGirderCore?.color).toBe('#5f7384');
-    expect(soffit?.color).toBe('#465968');
-    expect(fascia?.color).toBe('#708495');
-    expect(cableHousing?.color).toBe('#4b5d6a');
-    expect(towerCableAnchor?.color).toBe('#b6c0c8');
+    expect(boxGirderCore?.color).toBe('#5d6d7c');
+    expect(soffit?.color).toBe('#44535f');
+    expect(fascia?.color).toBe('#70808d');
+    expect(cableHousing?.color).toBe('#4c5a66');
+    expect(towerCableAnchor?.color).toBe('#bcc4cc');
   });
 
   it('adds a tower anchor block for every cable start so cables originate on the pylon', () => {
@@ -243,6 +290,29 @@ describe('generateBridgeModel', () => {
         Math.abs(anchor?.position[2] ?? 0)
       );
     });
+  });
+
+  it('adds top caps, saddle covers, and service crosswalks to the tower frame', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const topCaps = model.towerFrames.filter((part) => part.id.includes('-top-cap-'));
+    const saddleCovers = model.towerFrames.filter((part) => part.id.includes('-saddle-cover-'));
+    const serviceCrosswalks = model.towerFrames.filter((part) =>
+      part.id.includes('-service-crosswalk-')
+    );
+
+    expect(topCaps).toHaveLength(4);
+    expect(saddleCovers).toHaveLength(4);
+    expect(serviceCrosswalks).toHaveLength(2);
+    expect(serviceCrosswalks.every((part) => Math.abs(part.position[2]) < model.guides.towerInnerClearZ / 2)).toBe(true);
+  });
+
+  it('keeps cable deck anchor housings integrated behind the parapet edge system', () => {
+    const model = generateBridgeModel(balancedPreset.params);
+    const cableHousings = model.deckDetails.filter((part) => part.id.startsWith('cable-housing-'));
+
+    expect(cableHousings.length).toBeGreaterThan(0);
+    expect(cableHousings.every((part) => Math.abs(part.position[2]) > model.guides.parapetZ)).toBe(true);
+    expect(cableHousings.every((part) => Math.abs(part.position[2]) < model.guides.walkwayZ + 1.2)).toBe(true);
   });
 
   it('keeps tower placement proportional as span length changes', () => {

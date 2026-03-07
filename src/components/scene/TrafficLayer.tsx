@@ -7,6 +7,7 @@ import {
   getTrafficVehiclePosition
 } from '../../lib/sceneLayout';
 import type { TrafficVehicleData } from '../../types/bridge';
+import { scenePalette } from './sceneLook';
 
 const yAxis = new Vector3(0, 1, 0);
 
@@ -50,7 +51,7 @@ export const TrafficLayer = memo(
     const cabinRef = useRef<InstancedMesh | null>(null);
     const progressRef = useRef<number[]>([]);
     const bodyColor = useMemo(() => new Color(), []);
-    const cabinColor = useMemo(() => new Color('#20242c'), []);
+    const cabinColor = useMemo(() => new Color(scenePalette.traffic.cabin), []);
 
     if (progressRef.current.length !== trafficVehicles.length) {
       progressRef.current = trafficVehicles.map((vehicle) => vehicle.progress);
@@ -105,8 +106,8 @@ export const TrafficLayer = memo(
       <group>
         <instancedMesh
           castShadow
-          data-instance-count={trafficVehicles.length}
-          data-testid="traffic-body-instanced"
+          count={trafficVehicles.length}
+          name="traffic-body-instanced"
           receiveShadow
           ref={bodyRef}
           args={[undefined, undefined, trafficVehicles.length]}
@@ -117,14 +118,19 @@ export const TrafficLayer = memo(
 
         <instancedMesh
           castShadow
-          data-instance-count={trafficVehicles.length}
-          data-testid="traffic-cabin-instanced"
+          count={trafficVehicles.length}
+          name="traffic-cabin-instanced"
           receiveShadow
           ref={cabinRef}
           args={[undefined, undefined, trafficVehicles.length]}
         >
           <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="#20242c" metalness={0.18} roughness={0.36} vertexColors />
+          <meshStandardMaterial
+            color={scenePalette.traffic.cabin}
+            metalness={0.12}
+            roughness={0.42}
+            vertexColors
+          />
         </instancedMesh>
       </group>
     );

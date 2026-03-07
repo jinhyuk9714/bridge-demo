@@ -37,10 +37,11 @@ const emitOrbitEvent = (event: string) => {
   });
 };
 
-const sumInstanceCount = (testId: string) =>
-  screen
-    .getAllByTestId(testId)
-    .reduce((total, node) => total + Number(node.getAttribute('data-instance-count') ?? 0), 0);
+const sumInstanceCount = (container: HTMLElement, name: string) =>
+  [...container.querySelectorAll(`[name="${name}"]`)].reduce(
+    (total, node) => total + Number(node.getAttribute('count') ?? 0),
+    0
+  );
 
 vi.mock('../lib/exportImage', () => ({
   downloadCanvasPng: vi.fn()
@@ -148,26 +149,45 @@ describe('BridgeScene', () => {
   };
 
   it('renders core bridge geometry first, then enables scenic layers on the next frame', async () => {
-    render(<BridgeScene />);
+    const { container } = render(<BridgeScene />);
 
     expect(screen.getByTestId('scene-canvas-shell')).toHaveAttribute('tabindex', '0');
     expect(screen.getByTestId('bridge-canvas')).toBeInTheDocument();
     expect(orbitControlsProps?.zoomSpeed).toBe(0.25);
-    expect(sumInstanceCount('bridge-tower-frame-instanced')).toBeGreaterThan(0);
+    expect(container.querySelector('color[attach="background"]')).toHaveAttribute('args', '#ddd1c8');
+    expect(container.querySelector('fog[attach="fog"]')).toHaveAttribute(
+      'args',
+      '#cfc4b8,180,980'
+    );
+    expect(container.querySelector('ambientlight')).toHaveAttribute('intensity', '0.34');
+    expect(container.querySelector('hemispherelight')).toHaveAttribute(
+      'args',
+      '#f3cba8,#3d4f64,0.58'
+    );
+    expect(container.querySelector('directionallight')).toHaveAttribute('color', '#ffd1a6');
+    expect(container.querySelector('directionallight')).toHaveAttribute('intensity', '1.24');
+    expect(container.querySelector('directionallight')).toHaveAttribute('position', '164,118,-190');
+    expect(sumInstanceCount(container, 'bridge-tower-frame-instanced')).toBeGreaterThan(0);
     expect(
-      Number(screen.getByTestId('bridge-cable-instanced').getAttribute('data-instance-count'))
+      Number(container.querySelector('[name="bridge-cable-instanced"]')?.getAttribute('count'))
     ).toBe(
       balancedPreset.params.cableCountPerSide * 8
     );
-    expect(sumInstanceCount('bridge-cable-anchor-instanced')).toBe(
+    expect(sumInstanceCount(container, 'bridge-cable-anchor-instanced')).toBe(
       balancedPreset.params.cableCountPerSide * 8
     );
-    expect(sumInstanceCount('bridge-tower-cable-anchor-instanced')).toBe(
+    expect(sumInstanceCount(container, 'bridge-tower-cable-anchor-instanced')).toBe(
       balancedPreset.params.cableCountPerSide * 8
     );
-    expect(sumInstanceCount('bridge-pier-instanced')).toBeGreaterThanOrEqual(6);
-    expect(sumInstanceCount('bridge-bearing-instanced')).toBeGreaterThanOrEqual(2);
-    expect(screen.queryByTestId('bridge-cable-mesh')).not.toBeInTheDocument();
+    expect(sumInstanceCount(container, 'bridge-pier-instanced')).toBeGreaterThanOrEqual(6);
+    expect(sumInstanceCount(container, 'bridge-bearing-instanced')).toBeGreaterThanOrEqual(2);
+    expect(container.querySelector('[name="bridge-cable-mesh"]')).toBeNull();
+    expect(container.querySelector('mesh[data-testid], instancedmesh[data-testid], group[data-testid]')).toBeNull();
+    expect(
+      container.querySelector(
+        'mesh[data-instance-count], instancedmesh[data-instance-count], group[data-instance-count]'
+      )
+    ).toBeNull();
     expect(screen.queryByTestId('sky-shell')).not.toBeInTheDocument();
     expect(screen.queryByTestId('cliff-mass')).not.toBeInTheDocument();
     expect(screen.queryByTestId('atmosphere-band')).not.toBeInTheDocument();
