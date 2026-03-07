@@ -1,5 +1,5 @@
-import { memo } from 'react';
-import { Quaternion, Vector3 } from 'three';
+import { memo, useLayoutEffect, useMemo, useRef } from 'react';
+import { Euler, InstancedMesh, Matrix4, Quaternion, Vector3 } from 'three';
 
 import type {
   BridgeBoxPart,
@@ -11,6 +11,30 @@ import type {
 export type CameraView = {
   position: Vec3;
   target: Vec3;
+};
+
+export type BoxInstanceProfile = {
+  key: string;
+  testId?: string;
+  color: string;
+  castShadow: boolean;
+  receiveShadow: boolean;
+  metalness: number;
+  roughness: number;
+};
+
+export type BoxInstanceGroup = BoxInstanceProfile & {
+  parts: BridgeBoxPart[];
+};
+
+export type CableInstanceGroup = {
+  key: string;
+  testId?: string;
+  color: string;
+  metalness: number;
+  roughness: number;
+  radius: number;
+  cables: BridgeCable[];
 };
 
 export type OrbitControlsApi = {
@@ -100,6 +124,176 @@ export const getCameraPresetView = (
       };
   }
 };
+
+const yAxis = new Vector3(0, 1, 0);
+
+const buildBoxMatrix = (part: BridgeBoxPart) => {
+  const position = new Vector3(...part.position);
+  const rotation = new Euler(...(part.rotation ?? [0, 0, 0]));
+  const quaternion = new Quaternion().setFromEuler(rotation);
+  const scale = new Vector3(...part.size);
+
+  return new Matrix4().compose(position, quaternion, scale);
+};
+
+const buildCableMatrix = (cable: BridgeCable, radius: number) => {
+  const start = new Vector3(...cable.start);
+  const end = new Vector3(...cable.end);
+  const direction = end.clone().sub(start);
+  const length = direction.length();
+  const midpoint = start.clone().add(end).multiplyScalar(0.5);
+  const quaternion = new Quaternion().setFromUnitVectors(yAxis, direction.normalize());
+  const scale = new Vector3(radius, length, radius);
+
+  return new Matrix4().compose(midpoint, quaternion, scale);
+};
+
+export const buildBoxInstanceGroups = (
+  parts: BridgeBoxPart[],
+  getProfile: (part: BridgeBoxPart) => BoxInstanceProfile
+): BoxInstanceGroup[] => {
+  const groups = new Map<string, BoxInstanceGroup>();
+
+  parts.forEach((part) => {
+    const profile = getProfile(part);
+    const group = groups.get(profile.key);
+
+    if (group) {
+      group.parts.push(part);
+      return;
+    }
+
+    groups.set(profile.key, {
+      ...profile,
+      parts: [part]
+    });
+  });
+
+  return [...groups.values()];
+};
+
+export const buildCableInstanceTransforms = (cables: BridgeCable[], radius: number) =>
+  cables.map((cable) => ({
+    id: cable.id,
+    color: cable.color,
+    matrix: buildCableMatrix(cable, radius)
+  }));
+
+export const buildCableInstanceGroups = (
+  cables: BridgeCable[],
+  radius: number,
+  profile: Pick<CableInstanceGroup, 'testId' | 'metalness' | 'roughness'>
+): CableInstanceGroup[] => {
+  const groups = new Map<string, CableInstanceGroup>();
+
+  buildCableInstanceTransforms(cables, radius).forEach(({ id, color }) => {
+    const groupKey = `${color}:${radius}:${profile.metalness}:${profile.roughness}:${profile.testId ?? ''}`;
+    const cable = cables.find((entry) => entry.id === id);
+
+    if (!cable) {
+      return;
+    }
+
+    const group = groups.get(groupKey);
+
+    if (group) {
+      group.cables.push(cable);
+      return;
+    }
+
+    groups.set(groupKey, {
+      key: groupKey,
+      color,
+      radius,
+      cables: [cable],
+      ...profile
+    });
+  });
+
+  return [...groups.values()];
+};
+
+const hasInstancedMeshApi = (value: unknown): value is InstancedMesh =>
+  typeof value === 'object' &&
+  value !== null &&
+  'setMatrixAt' in value &&
+  typeof (value as InstancedMesh).setMatrixAt === 'function' &&
+  'instanceMatrix' in value;
+
+export const InstancedBoxes = memo(({ group }: { group: BoxInstanceGroup }) => {
+  const meshRef = useRef<InstancedMesh | null>(null);
+  const matrices = useMemo(() => group.parts.map(buildBoxMatrix), [group.parts]);
+
+  useLayoutEffect(() => {
+    if (!hasInstancedMeshApi(meshRef.current)) {
+      return;
+    }
+
+    matrices.forEach((matrix, index) => {
+      meshRef.current?.setMatrixAt(index, matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [matrices]);
+
+  return (
+    <instancedMesh
+      castShadow={group.castShadow}
+      data-instance-count={group.parts.length}
+      data-testid={group.testId}
+      receiveShadow={group.receiveShadow}
+      ref={meshRef}
+      args={[undefined, undefined, group.parts.length]}
+    >
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial
+        color={group.color}
+        metalness={group.metalness}
+        roughness={group.roughness}
+      />
+    </instancedMesh>
+  );
+});
+
+InstancedBoxes.displayName = 'InstancedBoxes';
+
+export const InstancedCables = memo(({ group }: { group: CableInstanceGroup }) => {
+  const meshRef = useRef<InstancedMesh | null>(null);
+  const matrices = useMemo(
+    () => group.cables.map((cable) => buildCableMatrix(cable, group.radius)),
+    [group.cables, group.radius]
+  );
+
+  useLayoutEffect(() => {
+    if (!hasInstancedMeshApi(meshRef.current)) {
+      return;
+    }
+
+    matrices.forEach((matrix, index) => {
+      meshRef.current?.setMatrixAt(index, matrix);
+    });
+    meshRef.current.instanceMatrix.needsUpdate = true;
+  }, [matrices]);
+
+  return (
+    <instancedMesh
+      castShadow
+      data-instance-count={group.cables.length}
+      data-testid={group.testId}
+      receiveShadow
+      ref={meshRef}
+      args={[undefined, undefined, group.cables.length]}
+    >
+      <cylinderGeometry args={[1, 1, 1, 8]} />
+      <meshStandardMaterial
+        color={group.color}
+        metalness={group.metalness}
+        roughness={group.roughness}
+      />
+    </instancedMesh>
+  );
+});
+
+InstancedCables.displayName = 'InstancedCables';
 
 export const SceneBox = memo(
   ({

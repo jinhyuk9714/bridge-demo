@@ -37,6 +37,11 @@ const emitOrbitEvent = (event: string) => {
   });
 };
 
+const sumInstanceCount = (testId: string) =>
+  screen
+    .getAllByTestId(testId)
+    .reduce((total, node) => total + Number(node.getAttribute('data-instance-count') ?? 0), 0);
+
 vi.mock('../lib/exportImage', () => ({
   downloadCanvasPng: vi.fn()
 }));
@@ -148,19 +153,21 @@ describe('BridgeScene', () => {
     expect(screen.getByTestId('scene-canvas-shell')).toHaveAttribute('tabindex', '0');
     expect(screen.getByTestId('bridge-canvas')).toBeInTheDocument();
     expect(orbitControlsProps?.zoomSpeed).toBe(0.25);
-    expect(screen.getAllByTestId('bridge-tower')).toHaveLength(2);
-    expect(screen.getAllByTestId('bridge-cable-mesh')).toHaveLength(
+    expect(sumInstanceCount('bridge-tower-frame-instanced')).toBeGreaterThan(0);
+    expect(
+      Number(screen.getByTestId('bridge-cable-instanced').getAttribute('data-instance-count'))
+    ).toBe(
       balancedPreset.params.cableCountPerSide * 8
     );
-    expect(screen.getAllByTestId('bridge-cable-anchor')).toHaveLength(
+    expect(sumInstanceCount('bridge-cable-anchor-instanced')).toBe(
       balancedPreset.params.cableCountPerSide * 8
     );
-    expect(screen.getAllByTestId('bridge-tower-cable-anchor')).toHaveLength(
+    expect(sumInstanceCount('bridge-tower-cable-anchor-instanced')).toBe(
       balancedPreset.params.cableCountPerSide * 8
     );
-    expect(screen.getAllByTestId('bridge-pier').length).toBeGreaterThanOrEqual(6);
-    expect(screen.getAllByTestId('bridge-bearing').length).toBeGreaterThanOrEqual(2);
-    expect(screen.queryByTestId('bridge-cable')).not.toBeInTheDocument();
+    expect(sumInstanceCount('bridge-pier-instanced')).toBeGreaterThanOrEqual(6);
+    expect(sumInstanceCount('bridge-bearing-instanced')).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByTestId('bridge-cable-mesh')).not.toBeInTheDocument();
     expect(screen.queryByTestId('sky-shell')).not.toBeInTheDocument();
     expect(screen.queryByTestId('cliff-mass')).not.toBeInTheDocument();
     expect(screen.queryByTestId('atmosphere-band')).not.toBeInTheDocument();

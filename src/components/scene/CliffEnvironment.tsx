@@ -1,42 +1,64 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 
 import type { SceneLayoutData } from '../../types/bridge';
-import { SceneBox } from './shared';
+import { buildBoxInstanceGroups, InstancedBoxes } from './shared';
 
-export const CliffEnvironment = memo(({ layout }: { layout: SceneLayoutData }) => (
-  <group>
-    {layout.cliffs.map((cliff) => (
-      <SceneBox
-        key={cliff.id}
-        metalness={0.02}
-        part={cliff}
-        roughness={0.96}
-        testId="cliff-mass"
-      />
-    ))}
+export const CliffEnvironment = memo(({ layout }: { layout: SceneLayoutData }) => {
+  const cliffGroups = useMemo(
+    () =>
+      buildBoxInstanceGroups(layout.cliffs, (part) => ({
+        key: `cliff:${part.color}`,
+        testId: 'cliff-mass-instanced',
+        color: part.color,
+        castShadow: true,
+        receiveShadow: true,
+        metalness: 0.02,
+        roughness: 0.96
+      })),
+    [layout.cliffs]
+  );
+  const shorelineGroups = useMemo(
+    () =>
+      buildBoxInstanceGroups(layout.shoreline, (part) => ({
+        key: `shoreline:${part.color}`,
+        testId: 'shoreline-shelf-instanced',
+        color: part.color,
+        castShadow: false,
+        receiveShadow: true,
+        metalness: 0.01,
+        roughness: 0.98
+      })),
+    [layout.shoreline]
+  );
+  const backdropGroups = useMemo(
+    () =>
+      buildBoxInstanceGroups(layout.backdrops, (part) => ({
+        key: `backdrop:${part.color}`,
+        testId: 'backdrop-ridge-instanced',
+        color: part.color,
+        castShadow: false,
+        receiveShadow: false,
+        metalness: 0,
+        roughness: 1
+      })),
+    [layout.backdrops]
+  );
 
-    {layout.shoreline.map((shelf) => (
-      <SceneBox
-        key={shelf.id}
-        castShadow={false}
-        metalness={0.01}
-        part={shelf}
-        roughness={0.98}
-        testId="shoreline-shelf"
-      />
-    ))}
+  return (
+    <group>
+      {cliffGroups.map((group) => (
+        <InstancedBoxes group={group} key={group.key} />
+      ))}
 
-    {layout.backdrops.map((ridge) => (
-      <SceneBox
-        key={ridge.id}
-        castShadow={false}
-        metalness={0}
-        part={ridge}
-        receiveShadow={false}
-        roughness={1}
-      />
-    ))}
-  </group>
-));
+      {shorelineGroups.map((group) => (
+        <InstancedBoxes group={group} key={group.key} />
+      ))}
+
+      {backdropGroups.map((group) => (
+        <InstancedBoxes group={group} key={group.key} />
+      ))}
+    </group>
+  );
+});
 
 CliffEnvironment.displayName = 'CliffEnvironment';
