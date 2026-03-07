@@ -8,6 +8,7 @@ import type {
 } from '../types/bridge';
 
 export const PRESET_STORAGE_KEY = 'bridge-demo:saved-presets';
+export const SESSION_STORAGE_KEY = 'bridge-demo:last-session';
 
 const presetIds = new Set(bridgePresets.map((preset) => preset.id));
 
@@ -109,6 +110,33 @@ const writeStoredPresets = (presets: SavedBridgePreset[]) => {
   localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(toSortedPresets(presets)));
 };
 
+const readStoredSession = (): ShareableBridgeState | null => {
+  const stored = localStorage.getItem(SESSION_STORAGE_KEY);
+
+  if (!stored) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(stored);
+
+    if (
+      typeof parsed !== 'object' ||
+      parsed === null ||
+      typeof parsed.selectedPreset !== 'string' ||
+      typeof parsed.cameraPreset !== 'string' ||
+      typeof parsed.params !== 'object' ||
+      parsed.params === null
+    ) {
+      return null;
+    }
+
+    return normalizeSnapshot(parsed as ShareableBridgeState);
+  } catch {
+    return null;
+  }
+};
+
 export const serializeShareState = (
   snapshot: ShareableBridgeState
 ): URLSearchParams => {
@@ -158,6 +186,47 @@ export const parseShareState = (search: string): ShareableBridgeState | null => 
 };
 
 export const loadSavedPresets = (): SavedBridgePreset[] => readStoredPresets();
+
+export const loadRestorableState = (): {
+  source: 'url' | 'session' | 'default';
+  snapshot: ShareableBridgeState | null;
+} => {
+  const search =
+    typeof window === 'undefined' ? '' : window.location.search;
+  const sharedSnapshot = parseShareState(search);
+
+  if (sharedSnapshot) {
+    return {
+      source: 'url',
+      snapshot: sharedSnapshot
+    };
+  }
+
+  const sessionSnapshot = readStoredSession();
+
+  if (sessionSnapshot) {
+    return {
+      source: 'session',
+      snapshot: sessionSnapshot
+    };
+  }
+
+  return {
+    source: 'default',
+    snapshot: null
+  };
+};
+
+export const saveLastSession = (snapshot: ShareableBridgeState): void => {
+  localStorage.setItem(
+    SESSION_STORAGE_KEY,
+    JSON.stringify(normalizeSnapshot(snapshot))
+  );
+};
+
+export const clearLastSession = (): void => {
+  localStorage.removeItem(SESSION_STORAGE_KEY);
+};
 
 export const upsertSavedPreset = (
   name: string,

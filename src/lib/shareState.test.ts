@@ -2,10 +2,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { balancedPreset, monumentalPreset } from '../data/bridgePresets';
 import {
+  clearLastSession,
+  loadRestorableState,
   loadSavedPresets,
   parseShareState,
   PRESET_STORAGE_KEY,
   removeSavedPreset,
+  saveLastSession,
+  SESSION_STORAGE_KEY,
   serializeShareState,
   upsertSavedPreset
 } from './shareState';
@@ -72,5 +76,59 @@ describe('shareState helpers', () => {
     removeSavedPreset(loadSavedPresets()[0].id);
 
     expect(loadSavedPresets()).toEqual([]);
+  });
+
+  it('prefers url state over the last saved session', () => {
+    saveLastSession({
+      params: { ...balancedPreset.params, spanLength: 620 },
+      selectedPreset: balancedPreset.id,
+      cameraPreset: 'side'
+    });
+    window.history.replaceState(
+      {},
+      '',
+      '/?preset=monumental&cam=front&span=810&elev=66&width=30&tower=240&cables=12&slope=44'
+    );
+
+    expect(loadRestorableState()).toEqual({
+      source: 'url',
+      snapshot: {
+        params: {
+          spanLength: 810,
+          deckElevation: 66,
+          deckWidth: 30,
+          towerHeight: 240,
+          cableCountPerSide: 12,
+          cableSlope: 44
+        },
+        selectedPreset: 'monumental',
+        cameraPreset: 'front'
+      }
+    });
+  });
+
+  it('restores the last session when there is no url state and can clear it', () => {
+    const snapshot = {
+      params: { ...balancedPreset.params, deckWidth: 22 },
+      selectedPreset: balancedPreset.id,
+      cameraPreset: 'side' as const
+    };
+
+    saveLastSession(snapshot);
+    window.history.replaceState({}, '', '/');
+
+    expect(loadRestorableState()).toEqual({
+      source: 'session',
+      snapshot
+    });
+
+    expect(localStorage.getItem(SESSION_STORAGE_KEY)).toContain('"deckWidth":22');
+
+    clearLastSession();
+
+    expect(loadRestorableState()).toEqual({
+      source: 'default',
+      snapshot: null
+    });
   });
 });
