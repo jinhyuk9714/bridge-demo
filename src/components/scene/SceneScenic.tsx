@@ -21,8 +21,8 @@ export const SceneScenic = memo(
           turbidity={7}
         />
         <CliffEnvironment layout={layout} />
-        <AtmosphereLayer layout={layout} />
-        <TrafficLayer layout={layout} />
+        <AtmosphereLayer atmosphereBands={layout.atmosphereBands} />
+        <TrafficLayer trafficVehicles={layout.trafficVehicles} />
       </>
     );
   }
